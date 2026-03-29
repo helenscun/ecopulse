@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>EcoPulse — Live Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Cabinet+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+/* ═══ TOKENS ═══════════════════════════════════════════════════════ */
+:root {
+  --ink:      #0c0e14;
+  --ink-2:    #13161f;
+  --ink-3:    #1a1e2b;
+  --ink-4:    #242838;
+  --border:   #2a2f42;
+  --border-2: #343a52;
+  --mist:     #8892a4;
+  --mist-2:   #b0bad0;
+  --snow:     #e8edf5;
+  --white:    #f5f8ff;
+  --lime:     #b8ff57;
+  --lime-dim: #9ae040;
+  --lime-bg:  rgba(184,255,87,0.08);
+  --lime-bdr: rgba(184,255,87,0.22);
+  --ember:    #ff7c43;
+  --ember-bg: rgba(255,124,67,0.10);
+  --ember-bdr:rgba(255,124,67,0.25);
+  --ice:      #4af0c8;
+  --ice-bg:   rgba(74,240,200,0.08);
+  --ice-bdr:  rgba(74,240,200,0.22);
+  --ruby:     #ff4d6d;
+  --ruby-bg:  rgba(255,77,109,0.10);
+  --ruby-bdr: rgba(255,77,109,0.22);
+  --sapphire: #4b8fff;
+  --sap-bg:   rgba(75,143,255,0.10);
+  --sap-bdr:  rgba(75,143,255,0.22);
+  --gold:     #ffd166;
+  --gold-bg:  rgba(255,209,102,0.10);
+  --r:6px; --r-sm:4px; --r-lg:12px; --r-xl:18px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --glow-lime: 0 0 20px rgba(184,255,87,0.2);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--ink);color:var(--snow);font-family:'Cabinet Grotesk',sans-serif;font-size:14px;line-height:1.6;overflow-x:hidden;}
+h1,h2,h3,h4,h5{font-family:'Fraunces',serif;letter-spacing:-0.02em;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:var(--ink-2);}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:3px;}
+button{cursor:pointer;font-family:'Cabinet Grotesk',sans-serif;}
+
+/* ═══ LAYOUT ═════════════════════════════════════════════════════ */
+.shell{display:flex;height:100vh;overflow:hidden;}
+
+/* ═══ SIDEBAR ════════════════════════════════════════════════════ */
+.sidebar{width:216px;flex-shrink:0;background:var(--ink-2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
+.sb-logo{display:flex;align-items:center;gap:10px;padding:20px 18px 16px;border-bottom:1px solid var(--border);}
+.sb-logo-mark{width:28px;height:28px;border-radius:7px;background:var(--lime);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:0.6rem;font-weight:600;color:var(--ink);}
+.sb-logo-text{font-family:'Fraunces',serif;font-size:1rem;font-weight:700;color:var(--white);}
+.sb-section{padding:14px 14px 6px;font-family:'IBM Plex Mono',monospace;font-size:0.58rem;letter-spacing:0.12em;color:var(--border-2);text-transform:uppercase;}
+.sb-item{display:flex;align-items:center;gap:9px;padding:8px 14px;margin:1px 8px;border-radius:var(--r-sm);color:var(--mist);font-size:0.84rem;font-weight:500;cursor:pointer;transition:all .13s;border:none;background:none;width:calc(100% - 16px);text-align:left;}
+.sb-item:hover{background:var(--ink-3);color:var(--snow);}
+.sb-item.active{background:var(--lime-bg);color:var(--lime);border:1px solid var(--lime-bdr);}
+.sb-item .icon{font-size:0.95rem;width:18px;text-align:center;flex-shrink:0;}
+.sb-footer{margin-top:auto;padding:14px;border-top:1px solid var(--border);}
+.sb-account{display:flex;align-items:center;gap:9px;padding:9px;border-radius:var(--r);background:var(--ink-3);border:1px solid var(--border);}
+.sb-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--lime),var(--ice));display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;color:var(--ink);}
+.sb-name{font-size:0.78rem;font-weight:600;color:var(--snow);}
+.sb-role{font-size:0.66rem;color:var(--mist);}
+.sb-sync-status{display:flex;align-items:center;gap:6px;padding:6px 14px;margin:4px 8px;border-radius:var(--r-sm);background:var(--lime-bg);border:1px solid var(--lime-bdr);font-size:0.68rem;color:var(--lime);font-family:'IBM Plex Mono',monospace;}
+.sb-sync-dot{width:6px;height:6px;border-radius:50%;background:var(--lime);animation:sb-pulse 2s infinite;}
+@keyframes sb-pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* ═══ MAIN ════════════════════════════════════════════════════════ */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;min-width:0;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 26px;border-bottom:1px solid var(--border);background:rgba(12,14,20,0.85);backdrop-filter:blur(12px);position:sticky;top:0;z-index:10;}
+.topbar-left{display:flex;flex-direction:column;}
+.topbar-title{font-family:'Fraunces',serif;font-size:1.15rem;font-weight:700;color:var(--white);}
+.topbar-sub{font-size:0.72rem;color:var(--mist);margin-top:1px;}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.content{padding:22px 26px;flex:1;}
+.nav-tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);padding:0 26px;background:var(--ink-2);position:sticky;top:53px;z-index:9;}
+.nav-tab{padding:11px 16px;font-size:0.8rem;font-weight:600;color:var(--mist);border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .13s;cursor:pointer;}
+.nav-tab:hover{color:var(--snow);}
+.nav-tab.active{color:var(--lime);border-bottom-color:var(--lime);}
+
+/* ═══ BUTTONS ════════════════════════════════════════════════════ */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r-sm);font-size:0.8rem;font-weight:600;border:none;transition:all .16s;cursor:pointer;}
+.btn-lime{background:var(--lime);color:var(--ink);}
+.btn-lime:hover{background:var(--lime-dim);transform:translateY(-1px);box-shadow:var(--glow-lime);}
+.btn-lime:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.btn-ghost{background:transparent;color:var(--mist-2);border:1px solid var(--border);}
+.btn-ghost:hover{background:var(--ink-3);color:var(--snow);border-color:var(--border-2);}
+.btn-danger{background:var(--ruby-bg);color:var(--ruby);border:1px solid var(--ruby-bdr);}
+.btn-ice{background:var(--ice-bg);color:var(--ice);border:1px solid var(--ice-bdr);}
+.btn-sm{padding:5px 11px;font-size:0.74rem;}
+
+/* ═══ CARDS ══════════════════════════════════════════════════════ */
+.card{background:var(--ink-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;}
+.card-flush{padding:0;overflow:hidden;}
+
+/* ═══ TAGS ════════════════════════════════════════════════════════ */
+.tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:3px;font-size:0.66rem;font-weight:600;letter-spacing:0.04em;font-family:'IBM Plex Mono',monospace;white-space:nowrap;}
+.tag-lime{background:var(--lime-bg);color:var(--lime);border:1px solid var(--lime-bdr);}
+.tag-ember{background:var(--ember-bg);color:var(--ember);border:1px solid var(--ember-bdr);}
+.tag-ruby{background:var(--ruby-bg);color:var(--ruby);border:1px solid var(--ruby-bdr);}
+.tag-ice{background:var(--ice-bg);color:var(--ice);border:1px solid var(--ice-bdr);}
+.tag-sap{background:var(--sap-bg);color:var(--sapphire);border:1px solid var(--sap-bdr);}
+.tag-mist{background:var(--ink-3);color:var(--mist-2);border:1px solid var(--border);}
+
+/* ═══ KPI TILES ══════════════════════════════════════════════════ */
+.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+.metric-tile{background:var(--ink-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;position:relative;overflow:hidden;transition:border-color .2s;}
+.metric-tile:hover{border-color:var(--border-2);}
+.metric-tile-accent{position:absolute;top:0;left:0;right:0;height:2px;border-radius:2px 2px 0 0;}
+.metric-lbl{font-family:'IBM Plex Mono',monospace;font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--mist);margin-bottom:8px;}
+.metric-val{font-family:'Fraunces',serif;font-size:1.85rem;font-weight:700;line-height:1;color:var(--white);}
+.metric-delta{font-size:0.7rem;margin-top:6px;display:flex;align-items:center;gap:4px;}
+.metric-sub{font-size:0.66rem;color:var(--mist);margin-top:3px;}
+
+/* ═══ GRIDS ══════════════════════════════════════════════════════ */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;}
+.grid-7-5{display:grid;grid-template-columns:7fr 5fr;gap:12px;margin-bottom:16px;}
+.grid-5-7{display:grid;grid-template-columns:5fr 7fr;gap:12px;margin-bottom:16px;}
+
+/* ═══ SECTION HEADERS ════════════════════════════════════════════ */
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.sh-title{font-family:'Fraunces',serif;font-size:0.95rem;font-weight:600;color:var(--white);}
+.sh-sub{font-size:0.7rem;color:var(--mist);margin-top:2px;}
+
+/* ═══ TABLE ══════════════════════════════════════════════════════ */
+.tx-table{width:100%;border-collapse:collapse;}
+.tx-table th{font-family:'IBM Plex Mono',monospace;font-size:0.56rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--mist);font-weight:500;padding:9px 14px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+.tx-table td{padding:10px 14px;border-bottom:1px solid rgba(42,47,66,0.5);vertical-align:middle;}
+.tx-table tr:last-child td{border-bottom:none;}
+.tx-table tbody tr{transition:background .1s;cursor:pointer;}
+.tx-table tbody tr:hover td{background:rgba(255,255,255,0.015);}
+.tx-merchant{font-weight:600;color:var(--white);font-size:0.82rem;}
+.tx-date{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--mist);}
+.tx-amt{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:0.82rem;}
+
+/* ═══ ALERTS ═════════════════════════════════════════════════════ */
+.alert-item{display:flex;align-items:flex-start;gap:11px;padding:13px;border-radius:var(--r);margin-bottom:9px;border:1px solid;}
+.alert-item.ember{background:var(--ember-bg);border-color:var(--ember-bdr);}
+.alert-item.ruby{background:var(--ruby-bg);border-color:var(--ruby-bdr);}
+.alert-item.lime{background:var(--lime-bg);border-color:var(--lime-bdr);}
+.alert-icon{font-size:1rem;flex-shrink:0;margin-top:1px;}
+.alert-title{font-weight:700;font-size:0.82rem;margin-bottom:2px;}
+.alert-body{font-size:0.73rem;color:var(--mist-2);line-height:1.5;}
+
+/* ═══ SKELETON ═══════════════════════════════════════════════════ */
+.skeleton{background:linear-gradient(90deg,var(--ink-3) 25%,var(--ink-4) 50%,var(--ink-3) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:var(--r-sm);}
+@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+
+/* ═══ DONUT + SPARKLINE ══════════════════════════════════════════ */
+.donut-legend{display:flex;flex-direction:column;gap:6px;flex:1;}
+.dleg-row{display:flex;align-items:center;gap:8px;font-size:0.76rem;}
+.dleg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dleg-name{flex:1;color:var(--mist-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dleg-pct{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--mist);}
+
+/* ═══ PROGRESS ════════════════════════════════════════════════════ */
+.progress-track{background:var(--ink-4);border-radius:4px;height:4px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--lime),var(--ice));transition:width .4s ease;}
+
+/* ═══ ONBOARDING ════════════════════════════════════════════════ */
+.oc-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--ink);position:relative;overflow:hidden;}
+.oc-bg{position:absolute;inset:0;background:radial-gradient(ellipse 60% 60% at 50% 50%,rgba(184,255,87,0.04) 0%,transparent 70%);pointer-events:none;}
+.oc-dots{position:absolute;inset:0;background-image:radial-gradient(circle,var(--border) 1px,transparent 1px);background-size:32px 32px;opacity:0.35;pointer-events:none;}
+.oc-card{background:var(--ink-2);border:1px solid var(--border);border-radius:var(--r-xl);width:100%;max-width:460px;position:relative;z-index:1;box-shadow:var(--shadow);}
+.oc-top{padding:26px 26px 0;}
+.oc-body{padding:20px 26px;}
+.oc-foot{padding:16px 26px;border-top:1px solid var(--border);display:flex;gap:8px;}
+.oc-step-bar{display:flex;gap:5px;margin-bottom:18px;}
+.oc-step-seg{height:3px;flex:1;border-radius:2px;background:var(--border);transition:background .3s;}
+.oc-step-seg.done{background:var(--lime);}
+.oc-step-seg.active{background:linear-gradient(90deg,var(--lime),var(--ice));}
+.c1-pill{display:flex;align-items:center;gap:10px;background:var(--ink-3);border:1px solid var(--border-2);border-radius:var(--r);padding:11px 13px;margin-bottom:16px;}
+.c1-mark{width:30px;height:30px;background:#d03027;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:0.56rem;font-weight:600;color:#fff;flex-shrink:0;}
+.trust-row{display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid var(--border);}
+.trust-row:last-child{border-bottom:none;}
+.trust-ico{width:26px;height:26px;border-radius:5px;background:var(--lime-bg);border:1px solid var(--lime-bdr);display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0;}
+.trust-title{font-size:0.8rem;font-weight:600;color:var(--snow);margin-bottom:1px;}
+.trust-desc{font-size:0.7rem;color:var(--mist);line-height:1.45;}
+.perm-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
+.perm-row:last-child{border-bottom:none;}
+.perm-name{font-size:0.8rem;color:var(--snow);}
+.perm-scope{font-family:'IBM Plex Mono',monospace;font-size:0.63rem;color:var(--mist);}
+.perm-yes{color:var(--lime);}
+.perm-no{color:var(--ruby);}
+.sync-ring{width:56px;height:56px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--lime);animation:spin .9s linear infinite;margin:0 auto 16px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ═══ ERROR TOAST ════════════════════════════════════════════════ */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--ruby-bg);border:1px solid var(--ruby-bdr);color:var(--ruby);padding:12px 18px;border-radius:var(--r);font-size:0.78rem;z-index:100;max-width:340px;animation:fadeIn .2s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* ═══ SCORE RING ══════════════════════════════════════════════════ */
+.score-ring-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
+
+/* ═══ RESPONSIVE ══════════════════════════════════════════════════ */
+@media(max-width:1100px){
+  .metric-grid{grid-template-columns:1fr 1fr;}
+  .grid-7-5,.grid-5-7{grid-template-columns:1fr;}
+  .sidebar{width:60px;}
+  .sb-logo-text,.sb-item span:not(.icon),.sb-section,.sb-name,.sb-role{display:none;}
+  .sb-item{justify-content:center;padding:9px;}
+  .sb-logo{justify-content:center;}
+}
+@media(max-width:700px){
+  .metric-grid{grid-template-columns:1fr;}
+  .grid-2,.grid-3{grid-template-columns:1fr;}
+  .content{padding:14px;}
+  .topbar{padding:10px 14px;}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+/* ─── CONFIG ─────────────────────────────────────────────────────────────────
+   Change this to your backend URL. During local dev it's localhost:5001.
+   When deployed (e.g. Railway, Render, Heroku) replace with your live URL.
+─────────────────────────────────────────────────────────────────────────── */
+const API_BASE = 'http://localhost:5001';
+
+/* ─── API LAYER ───────────────────────────────────────────────────────────── */
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+  });
+  if (!res.ok) throw new Error(`API ${path} → ${res.status}`);
+  const json = await res.json();
+  if (!json.ok) throw new Error(json.error || 'Unknown API error');
+  return json.pulse || json.history || json.data || json;
+}
+
+const api = {
+  getPulse:     ()   => apiFetch('/get-pulse'),
+  getHistory:   (n)  => apiFetch(`/get-history?limit=${n || 10}`),
+  getDashboard: ()   => apiFetch('/get-dashboard'),
+  getQuote:     (tk) => apiFetch(`/market-quote/${tk}`),
+  getMarketIndices: () => apiFetch('/api/market-indices').then(res => res.indices || []),
+};
+
+/* ─── SVG HELPERS ─────────────────────────────────────────────────────────── */
+function Sparkline({ data = [], color = '#b8ff57', h = 48, w = 400 }) {
+  if (!data.length) return null;
+  const max = Math.max(...data), min = Math.min(...data);
+  const pts = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * w;
+    const y = h - ((v - min) / (max - min || 1)) * (h - 6) - 3;
+    return `${x},${y}`;
+  });
+  const fill = [...pts];
+  const polygon = `0,${h} ${fill.join(' ')} ${w},${h}`;
+  const [lx, ly] = pts[pts.length - 1].split(',');
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ display: 'block', width: '100%' }}>
+      <polygon points={polygon} fill={`${color}18`} />
+      <polyline points={pts.join(' ')} fill="none" stroke={color} strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />
+      <circle cx={lx} cy={ly} r="3" fill={color} />
+    </svg>
+  );
+}
+
+function DonutChart({ data = [] }) {
+  const r = 44, cx = 52, cy = 52, circ = 2 * Math.PI * r;
+  let offset = 0;
+  const segs = data.map(d => {
+    const dash = (d.pct / 100) * circ;
+    const s = { ...d, dash, offset, gap: circ - dash };
+    offset += dash + 1.5;
+    return s;
+  });
+  if (!segs.length) return (
+    <svg width="104" height="104" viewBox="0 0 104 104">
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--ink-4)" strokeWidth="10" />
+    </svg>
+  );
+  return (
+    <svg width="104" height="104" viewBox="0 0 104 104">
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="10" />
+      {segs.map((s, i) => (
+        <circle key={i} cx={cx} cy={cy} r={r} fill="none"
+          stroke={s.color} strokeWidth="10"
+          strokeDasharray={`${s.dash} ${s.gap}`}
+          strokeDashoffset={-s.offset + 1}
+          transform={`rotate(-90 ${cx} ${cy})`} />
+      ))}
+    </svg>
+  );
+}
+
+function ScoreRing({ score = 0 }) {
+  const r = 52, circ = 2 * Math.PI * r;
+  const dash = (score / 100) * circ;
+  const color = score >= 70 ? 'var(--lime)' : score >= 45 ? 'var(--gold)' : 'var(--ruby)';
+  const label = score >= 80 ? 'ELITE' : score >= 60 ? 'RESILIENT' : score >= 40 ? 'CAUTION' : 'AT RISK';
+  return (
+    <div className="score-ring-wrap">
+      <svg width="130" height="130" viewBox="0 0 130 130">
+        <circle cx="65" cy="65" r={r} fill="none" stroke="var(--ink-4)" strokeWidth="10" />
+        <circle cx="65" cy="65" r={r} fill="none" stroke={color} strokeWidth="10"
+          strokeDasharray={`${dash} ${circ - dash}`}
+          strokeDashoffset={circ / 4}
+          strokeLinecap="round"
+          transform="rotate(-90 65 65)" />
+        <text x="65" y="60" textAnchor="middle" fill="var(--white)" fontFamily="Fraunces,serif" fontSize="22" fontWeight="700">{score}</text>
+        <text x="65" y="76" textAnchor="middle" fill={color} fontFamily="IBM Plex Mono,monospace" fontSize="8" letterSpacing="1.5">{label}</text>
+      </svg>
+    </div>
+  );
+}
+
+/* ─── LOADING SKELETON ────────────────────────────────────────────────────── */
+function SkeletonDash() {
+  return (
+    <div>
+      <div style={{ height: '24px', width: '200px', marginBottom: '16px' }} className="skeleton" />
+      <div className="metric-grid" style={{ marginBottom: '16px' }}>
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="metric-tile" style={{ minHeight: '95px' }}>
+            <div style={{ height: '10px', width: '75px', marginBottom: '10px' }} className="skeleton" />
+            <div style={{ height: '28px', width: '100px', marginBottom: '8px' }} className="skeleton" />
+            <div style={{ height: '9px', width: '55px' }} className="skeleton" />
+          </div>
+        ))}
+      </div>
+      <div className="grid-7-5">
+        <div className="card" style={{ minHeight: '140px' }}>
+          <div style={{ height: '12px', width: '130px', marginBottom: '14px' }} className="skeleton" />
+          {[...Array(4)].map((_, i) => <div key={i} style={{ height: '9px', marginBottom: '9px', width: `${85 - i * 10}%` }} className="skeleton" />)}
+        </div>
+        <div className="card" style={{ minHeight: '140px' }}>
+          <div style={{ height: '12px', width: '95px', marginBottom: '14px' }} className="skeleton" />
+          <div style={{ height: '75px', borderRadius: '50%', width: '75px', margin: '0 auto' }} className="skeleton" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── EMPTY STATE ─────────────────────────────────────────────────────────── */
+function EmptyState({ onFetch, loading }) {
+  return (
+    <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '52px 24px', textAlign: 'center' }}>
+      <div style={{ fontSize: '2.2rem', marginBottom: '14px', opacity: 0.5 }}>📊</div>
+      <div style={{ fontFamily: 'Fraunces,serif', fontSize: '1.1rem', color: 'var(--mist-2)', marginBottom: '7px' }}>No live data yet</div>
+      <div style={{ fontSize: '0.8rem', color: 'var(--mist)', maxWidth: '300px', lineHeight: 1.6, marginBottom: '18px' }}>
+        Hit <strong style={{ color: 'var(--lime)' }}>Fetch Pulse</strong> to pull the latest transaction from Capital One Nessie, enrich it with market data, and save it to MongoDB.
+      </div>
+      <button className="btn btn-lime" onClick={onFetch} disabled={loading}>
+        {loading ? '⟳ Fetching…' : '⚡ Fetch Pulse'}
+      </button>
+    </div>
+  );
+}
+
+/* ─── CONNECT / ONBOARDING ────────────────────────────────────────────────── */
+function ConnectFlow({ onComplete }) {
+  const [step, setStep] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [syncMsg, setSyncMsg] = useState('');
+
+  const syncSteps = [
+    'Establishing encrypted session…',
+    'Receiving authorization token…',
+    'Importing transaction history…',
+    'Mapping merchant codes to sectors…',
+    'Enriching with market signals…',
+    'Computing Inflation Index…',
+    'Building EcoPulse Score…',
+    'Ready.',
+  ];
+
+  function startSync() {
+    setStep(2);
+    let p = 0, si = 0;
+    setSyncMsg(syncSteps[0]);
+    const iv = setInterval(() => {
+      p += Math.random() * 14 + 4;
+      if (p >= 100) { p = 100; clearInterval(iv); setTimeout(() => setStep(3), 500); }
+      setProgress(Math.min(p, 100));
+      si = Math.min(Math.floor(p / 14), syncSteps.length - 1);
+      setSyncMsg(syncSteps[si]);
+    }, 650);
+  }
+
+  const steps = ['Introduction', 'Permissions', 'Connecting', 'Complete'];
+
+  return (
+    <div className="oc-wrap">
+      <div className="oc-bg" /><div className="oc-dots" />
+      <div style={{ position: 'absolute', top: 22, left: 22, display: 'flex', alignItems: 'center', gap: 9, zIndex: 2 }}>
+        <div className="sb-logo-mark">EP</div>
+        <span style={{ fontFamily: 'Fraunces,serif', fontWeight: 700, fontSize: '0.95rem', color: 'var(--white)' }}>EcoPulse</span>
+      </div>
+      <div className="oc-card">
+        {step < 3 && (
+          <div style={{ padding: '18px 26px 0' }}>
+            <div className="oc-step-bar">
+              {steps.map((_, i) => <div key={i} className={`oc-step-seg ${i < step ? 'done' : i === step ? 'active' : ''}`} />)}
+            </div>
+            <div style={{ fontFamily: 'IBM Plex Mono,monospace', fontSize: '0.58rem', color: 'var(--mist)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>
+              Step {step + 1} of {steps.length} — {steps[step]}
+            </div>
+          </div>
+        )}
+
+        {step === 0 && (<>
+          <div className="oc-top" style={{ paddingBottom: '4px' }}>
+            <h2 style={{ fontSize: '1.2rem', marginBottom: '6px' }}>Connect Capital One</h2>
+            <p style={{ fontSize: '0.76rem', color: 'var(--mist)', lineHeight: 1.6 }}>Link your account to see how markets affect your real spending.</p>
+          </div>
+          <div className="oc-body">
+            <div className="c1-pill">
+              <div className="c1-mark">C1</div>
+              <div>
+                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--snow)' }}>Capital One (Nessie API)</div>
+                <div style={{ fontSize: '0.68rem', color: 'var(--mist)' }}>Sandbox · OAuth 2.0</div>
+              </div>
+              <div style={{ marginLeft: 'auto' }}><span className="tag tag-lime">ACTIVE</span></div>
+            </div>
+            <div style={{ borderRadius: 'var(--r)', background: 'var(--lime-bg)', border: '1px solid var(--lime-bdr)', padding: '13px 15px', marginBottom: '14px' }}>
+              <div style={{ fontFamily: 'Fraunces,serif', fontWeight: 600, color: 'var(--lime)', fontSize: '0.88rem', marginBottom: '9px' }}>🔒 How this works</div>
+              {[
+                ['🔐', 'Nessie sandbox', 'Using Capital One\'s developer API — no real money, safe for testing.'],
+                ['👁️', 'Read-only enrichment', 'Your transactions are mapped to ETF sectors and scored by EcoPulse.'],
+                ['💾', 'Stored in MongoDB', 'Each enriched pulse is persisted to your Atlas cluster for history tracking.'],
+              ].map(([ico, t, d]) => (
+                <div key={t} className="trust-row">
+                  <div className="trust-ico">{ico}</div>
+                  <div><div className="trust-title">{t}</div><div className="trust-desc">{d}</div></div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="oc-foot">
+            <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => {}}>Cancel</button>
+            <button className="btn btn-lime" style={{ flex: 2, justifyContent: 'center' }} onClick={() => setStep(1)}>Continue →</button>
+          </div>
+        </>)}
+
+        {step === 1 && (<>
+          <div className="oc-top">
+            <div className="c1-pill" style={{ marginBottom: 0 }}>
+              <div className="c1-mark">C1</div>
+              <div>
+                <div style={{ fontSize: '0.76rem', color: 'var(--mist)' }}>capital one · authorization</div>
+                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--snow)' }}>EcoPulse is requesting access</div>
+              </div>
+            </div>
+          </div>
+          <div className="oc-body">
+            <div style={{ background: 'var(--ink-3)', border: '1px solid var(--border)', borderRadius: 'var(--r)', padding: '3px 13px', marginBottom: '14px' }}>
+              {[
+                ['Transaction history (90 days)', 'read-only', true],
+                ['Merchant name & amount', 'read-only', true],
+                ['Account balance', 'read-only', true],
+                ['Account number (full)', '—', false],
+                ['Initiate transfers', '—', false],
+              ].map(([perm, scope, ok]) => (
+                <div key={perm} className="perm-row">
+                  <div><div className="perm-name">{perm}</div><div className="perm-scope" style={{ color: ok ? 'var(--lime)' : 'var(--ruby)' }}>{scope}</div></div>
+                  <div className={ok ? 'perm-yes' : 'perm-no'}>{ok ? '✓' : '✗'}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="oc-foot">
+            <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => setStep(0)}>← Back</button>
+            <button className="btn btn-lime" style={{ flex: 2, justifyContent: 'center' }} onClick={startSync}>Authorize →</button>
+          </div>
+        </>)}
+
+        {step === 2 && (
+          <div style={{ padding: '36px 26px', textAlign: 'center' }}>
+            <div className="sync-ring" />
+            <div style={{ fontFamily: 'Fraunces,serif', fontSize: '1.15rem', fontWeight: 700, marginBottom: '7px' }}>Syncing your account</div>
+            <div style={{ fontFamily: 'IBM Plex Mono,monospace', fontSize: '0.7rem', color: 'var(--lime)', marginBottom: '18px' }}>{syncMsg}</div>
+            <div style={{ margin: '0 auto 12px', maxWidth: '260px' }}>
+              <div className="progress-track"><div className="progress-fill" style={{ width: `${progress}%` }} /></div>
+              <div style={{ fontFamily: 'IBM Plex Mono', fontSize: '0.68rem', color: 'var(--lime)', marginTop: '6px' }}>{Math.round(progress)}%</div>
+            </div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--mist)' }}>Your credentials are never transmitted to EcoPulse servers.</div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div style={{ padding: '36px 26px', textAlign: 'center' }}>
+            <div style={{ fontSize: '2.6rem', marginBottom: '14px' }}>✅</div>
+            <h2 style={{ fontSize: '1.3rem', marginBottom: '7px' }}>You're connected</h2>
+            <p style={{ fontSize: '0.8rem', color: 'var(--mist)', lineHeight: 1.6, maxWidth: '300px', margin: '0 auto 18px' }}>
+              EcoPulse is ready to enrich your Capital One transactions with live market signals.
+            </p>
+            <button className="btn btn-lime" style={{ width: '100%', justifyContent: 'center' }} onClick={onComplete}>
+              View your dashboard →
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const parseMoney = (val) => {
+  if (!val) return 0;
+  if (typeof val === 'number') return Math.abs(val);
+  const cleaned = parseFloat(val.replace(/[^-0-9.]/g, ''));
+  return isNaN(cleaned) ? 0 : Math.abs(cleaned);
+};
+
+/* ─── OVERVIEW TAB ────────────────────────────────────────────────────────── */
+function OverviewTab({ dash, history, onFetchPulse, fetchLoading }) {
+  if (!dash || !dash.summary) return <SkeletonDash />;
+
+  const { summary, categoryBreakdown = [], spendingTrend7d = [] } = dash;
+
+  // Helper to handle both "$12.00" strings and 12.00 numbers
+  const parseMoney = (val) => {
+    if (typeof val === 'number') return val;
+    if (!val) return 0;
+    return parseFloat(String(val).replace(/[^0-9.-]+/g, "")) || 0;
+  };
+
+  const totalCats = categoryBreakdown.reduce((a, c) => a + parseMoney(c.amount), 0);
+
+  return (<>
+    {/* KPI GRID */}
+    <div className="metric-grid">
+      <div className="metric-tile">
+        <div className="metric-tile-accent" style={{ background: 'linear-gradient(90deg,var(--lime),var(--ice))' }} />
+        <div className="metric-lbl">Total Spent · {dash.period?.month}</div>
+        <div className="metric-val">
+          ${parseMoney(summary.totalSpent).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </div>
+        <div className="metric-sub">{summary.transactionCount} pulses recorded</div>
+      </div>
+      <div className="metric-tile">
+        <div className="metric-tile-accent" style={{ background: 'linear-gradient(90deg,var(--ice),var(--sapphire))' }} />
+        <div className="metric-lbl">Avg EcoPulse Score</div>
+        <div className="metric-val" style={{ background: 'linear-gradient(135deg,var(--lime),var(--ice))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          {summary.avgEcoPulseScore || 0}
+        </div>
+        <div className="metric-sub">Target: 80+</div>
+      </div>
+      <div className="metric-tile">
+        <div className="metric-tile-accent" style={{ background: 'linear-gradient(90deg,var(--ember),var(--gold))' }} />
+        <div className="metric-lbl">Top Category</div>
+        <div className="metric-val" style={{ fontSize: '1.1rem', paddingTop: '6px' }}>{categoryBreakdown[0]?.category || '—'}</div>
+        <div className="metric-sub">{categoryBreakdown[0]?.pct || 0}% of total spend</div>
+      </div>
+      <div className="metric-tile">
+        <div className="metric-tile-accent" style={{ background: 'linear-gradient(90deg,var(--ruby),var(--ember))' }} />
+        <div className="metric-lbl">Sectors Mapped</div>
+        <div className="metric-val">{categoryBreakdown.length}</div>
+        <div className="metric-sub">Live AlphaVantage data</div>
+      </div>
+    </div>
+
+    <div className="grid-7-5">
+      {/* SPENDING TREND (LINE CHART) */}
+      <div className="card">
+        <div className="sh">
+          <div><div className="sh-title">Spending Trend</div><div className="sh-sub">Last 7 days of activity</div></div>
+          <span className="tag tag-lime">Live</span>
+        </div>
+        {spendingTrend7d.length ? (
+          <>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '12px' }}>
+              <span style={{ fontFamily: 'Fraunces,serif', fontSize: '1.5rem', fontWeight: 700 }}>
+                ${Math.max(...spendingTrend7d).toFixed(0)}
+              </span>
+              <span style={{ fontSize: '0.72rem', color: 'var(--mist)' }}>peak day</span>
+            </div>
+            {/* Using the Sparkline component we'll define below */}
+            <Sparkline data={spendingTrend7d} />
+          </>
+        ) : (
+          <div style={{ color: 'var(--mist)', fontSize: '0.8rem', textAlign: 'center', padding: '24px 0' }}>
+            No spending trend yet — fetch a pulse to start.
+          </div>
+        )}
+      </div>
+
+      {/* DONUT CHART */}
+      <div className="card">
+        <div className="sh"><div className="sh-title">Spending by Sector</div></div>
+        {categoryBreakdown.length ? (
+          <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+               {/* This component needs your data to render the SVG donut */}
+              <DonutChart data={categoryBreakdown} />
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontFamily: 'Fraunces,serif', fontWeight: 700, fontSize: '0.85rem' }}>${Math.round(totalCats)}</span>
+                <span style={{ fontFamily: 'IBM Plex Mono,monospace', fontSize: '0.52rem', color: 'var(--mist)' }}>TOTAL</span>
+              </div>
+            </div>
+            <div className="donut-legend">
+              {categoryBreakdown.map(c => (
+                <div key={c.category} className="dleg-row">
+                  <div className="dleg-dot" style={{ background: c.color }} />
+                  <div className="dleg-name">{c.category}</div>
+                  <div className="dleg-pct">{c.pct}%</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div style={{ color: 'var(--mist)', fontSize: '0.8rem', textAlign: 'center', padding: '24px 0' }}>No category data yet.</div>
+        )}
+      </div>
+    </div>
+  </>);
+}
+
+/* ─── HISTORY TAB ─────────────────────────────────────────────────────────── */
+function HistoryTab({ history, onFetchPulse, fetchLoading }) {
+  if (!history || !history.length) return (
+    <div style={{ padding: '24px 0' }}>
+      <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
+        <div style={{ color: 'var(--mist)', marginBottom: '15px' }}>No history found in MongoDB Atlas.</div>
+        <button className="btn btn-lime btn-sm" onClick={onFetchPulse} disabled={fetchLoading}>
+          {fetchLoading ? '⟳ Syncing...' : '⚡ Seed Initial Data'}
+        </button>
+      </div>
+    </div>
+  );
+
+  return (<>
+    <div className="sh">
+      <div>
+        <div className="sh-title">Pulse History</div>
+        <div className="sh-sub">All enriched transactions from MongoDB</div>
+      </div>
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <span className="tag tag-mist">{history.length} records</span>
+        <button className="btn btn-lime btn-sm" onClick={onFetchPulse} disabled={fetchLoading}>
+          {fetchLoading ? '⟳' : '⚡ Fetch New Pulse'}
+        </button>
+      </div>
+    </div>
+
+    <div className="card card-flush" style={{ overflowX: 'auto' }}>
+      <table className="tx-table">
+        <thead>
+          <tr>
+            <th>Merchant</th>
+            <th>Category</th>
+            <th>Amount</th>
+            <th>Ticker</th>
+            <th>Exposure</th>
+            <th>Source & Signal</th> {/* Swapped Header */}
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {history.map((p, i) => {
+            // Signal coloring logic
+            const signalValue = parseFloat(p.marketSignal?.replace(/[^0-9.-]/g, '')) || 0;
+            const signalClass = signalValue >= 0 ? 'tag-lime' : 'tag-ruby';
+
+            return (
+              <tr key={i}>
+                <td className="tx-merchant">
+                  <div style={{ fontWeight: '600' }}>{p.merchant || 'Unknown'}</div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--border-2)', fontFamily: 'var(--mono)' }}>{p.txCode}</div>
+                </td>
+                <td><span className="tag tag-mist">{p.category || 'General'}</span></td>
+                
+                <td className="tx-amt" style={{ color: 'var(--ember)', fontWeight: '600' }}>
+                  ${parseMoney(p.amount).toFixed(2)}
+                </td>
+
+                {/* Ticker Column */}
+                <td><span className="tag tag-sap">{p.ticker || 'N/A'}</span></td>
+                
+                {/* Exposure Column */}
+                <td style={{ fontSize: '0.75rem', color: 'var(--mist)' }}>
+                   {p.sector || 'Unmapped'}
+                </td>
+
+                {/* THE SWAP: marketSignal is now in the Source column */}
+                <td style={{ fontFamily: 'var(--mono)', fontSize: '0.65rem' }}>
+                  <div style={{ color: 'var(--border-2)', fontWeight: 'bold', marginBottom: '4px' }}>
+                    {p.marketDataSource || 'AlphaVantage'}
+                  </div>
+                  <span className={`tag ${signalClass}`} style={{ fontSize: '0.6rem' }}>
+                    {p.marketSignal || 'Stable'}
+                  </span>
+                </td>
+
+                <td className="tx-date">
+                  {p.createdAt ? new Date(p.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : p.date}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  </>);
+}
+
+/* ─── INSIGHTS TAB ────────────────────────────────────────────────────────── */
+function InsightsTab({ history }) {
+  // 1. Safety check for empty history
+  if (!history || !history.length) return (
+    <div style={{ color: 'var(--mist)', padding: '32px', textAlign: 'center', fontSize: '0.84rem' }}>
+      No insights yet — fetch some pulses to generate spending signals.
+    </div>
+  );
+
+  // 2. Map data to be "Safe" (Handling both old and new field names)
+  const safeHistory = history.map(p => ({
+    ...p,
+    score: p.ecoPulseScore || 85, // Fallback score if missing
+    val: parseFloat(typeof p.amount === 'string' ? p.amount.replace('$', '') : (p.amount || p.spent || 0)),
+    name: p.merchant_name || p.merchant || "Transaction",
+    msg: p.insight || "Market analysis in progress...",
+    ticker: p.mapped_sector_etf || p.marketTicker || "SPY"
+  }));
+
+  // 3. Perform Calculations on the SAFE data
+  const scored = [...safeHistory].sort((a, b) => b.score - a.score);
+  const best = scored[0];
+  const worst = scored[scored.length - 1];
+  const avgScore = Math.round(safeHistory.reduce((s, p) => s + p.score, 0) / safeHistory.length);
+
+  const colorFor = (s) => s >= 70 ? 'lime' : s >= 45 ? 'ember' : 'ruby';
+
+  return (<>
+    <div className="grid-3" style={{ marginBottom: '16px' }}>
+      <div className="card" style={{ textAlign: 'center' }}>
+        <div className="metric-lbl">Average Score</div>
+        <div className="metric-val" style={{ background: 'linear-gradient(135deg,var(--lime),var(--ice))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{avgScore}</div>
+      </div>
+      <div className="card" style={{ textAlign: 'center' }}>
+        <div className="metric-lbl">Best Pulse</div>
+        <div className="metric-val" style={{ color: 'var(--lime)', fontSize: '1.4rem' }}>{best.score}</div>
+        <div className="metric-sub">{best.name}</div>
+      </div>
+      <div className="card" style={{ textAlign: 'center' }}>
+        <div className="metric-lbl">Needs Attention</div>
+        <div className="metric-val" style={{ color: 'var(--ruby)', fontSize: '1.4rem' }}>{worst.score}</div>
+        <div className="metric-sub">{worst.name}</div>
+      </div>
+    </div>
+
+    <div className="sh"><div className="sh-title">All Pulse Insights</div></div>
+    {safeHistory.map((p, i) => (
+      <div key={i} className={`alert-item ${colorFor(p.score)}`} style={{ marginBottom: '10px' }}>
+        <div className="alert-icon">{p.score >= 70 ? '✅' : p.score >= 45 ? '⚠️' : '🚨'}</div>
+        <div style={{ flex: 1 }}>
+          <div className="alert-title">{p.name} — ${p.val.toFixed(2)}</div>
+          <div className="alert-body">{p.msg}</div>
+          <div style={{ display: 'flex', gap: '6px', marginTop: '7px', flexWrap: 'wrap' }}>
+            <span className={`tag tag-${colorFor(p.score)}`}>Score: {p.score}</span>
+            <span className="tag tag-sap">{p.ticker}</span>
+            <span className="tag tag-mist">{p.original_category || p.category}</span>
+            <span style={{ fontFamily: 'IBM Plex Mono', fontSize: '0.64rem', color: 'var(--mist)' }}>
+              {p.created_at ? new Date(p.created_at).toLocaleDateString() : 'Recent'}
+            </span>
+          </div>
+        </div>
+      </div>
+    ))}
+  </>);
+}
+
+/* ─── MARKET QUOTE WIDGET ─────────────────────────────────────────────────── */
+function MarketTab() {
+  const [indices, setIndices] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  const refreshMarket = () => {
+    api.getMarketIndices().then(data => {
+      setIndices(data || []);
+      // If we don't have all 8 yet, check again in 5 seconds
+      if (data.length < 8) {
+        setTimeout(refreshMarket, 5000);
+      } else {
+        setLoading(false);
+      }
+    });
+  };
+
+  React.useEffect(() => {
+    refreshMarket();
+  }, []);
+
+  if (loading && indices.length === 0) {
+    return (
+      <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
+        <div className="sh-title">Initializing Market Sync...</div>
+        <div style={{ color: 'var(--mist)', fontSize: '0.8rem', marginTop: '10px' }}>
+          Fetching 8 sector ETFs from Alpha Vantage (12s intervals to respect API limits).
+        </div>
+        <div className="loader-bar" style={{ width: '100%', height: '4px', background: 'var(--ink-3)', marginTop: '20px', borderRadius: '2px' }}>
+          <div className="loader-progress" style={{ width: `${(indices.length / 8) * 100}%`, height: '100%', background: 'var(--lime)', transition: 'width 0.5s' }} />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="market-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
+      {indices.map(idx => (
+        <div key={idx.ticker} className="card">
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ fontWeight: 'bold', color: 'var(--lime)' }}>{idx.ticker}</span>
+            <span style={{ color: idx.direction === 'up' ? 'var(--lime)' : 'var(--ruby)', fontSize: '0.75rem' }}>
+              {idx.direction === 'up' ? '▲' : '▼'} {idx.pct_change}%
+            </span>
+          </div>
+          <div style={{ fontSize: '1.5rem', margin: '10px 0' }}>${parseFloat(idx.price).toFixed(2)}</div>
+          <div style={{ fontSize: '0.65rem', color: 'var(--mist)' }}>Updated {new Date(idx.lastUpdated).toLocaleTimeString()}</div>
+        </div>
+      ))}
+      {indices.length < 8 && <div className="tag tag-mist">Syncing remaining {8 - indices.length} tickers...</div>}
+    </div>
+  );
+}
+
+function SpendingChart({ trendData }) {
+  const chartRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!trendData || trendData.length === 0) return;
+
+    const ctx = document.getElementById('trendChart').getContext('2d');
+    
+    // Destroy existing chart if it exists
+    if (chartRef.current) {
+      chartRef.current.destroy();
+    }
+
+    const labels = trendData.map(d => d._id); 
+    const totals = trendData.map(d => d.dailyTotal);
+
+    chartRef.current = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Spending',
+          data: totals,
+          borderColor: '#b8ff57',
+          backgroundColor: 'rgba(184, 255, 87, 0.05)',
+          borderWidth: 2,
+          pointRadius: 4,
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+
+    return () => { if (chartRef.current) chartRef.current.destroy(); };
+  }, [trendData]);
+
+  return (
+    <div style={{ height: '200px', width: '100%' }}>
+      <canvas id="trendChart"></canvas>
+    </div>
+  );
+}
+
+/* ─── MAIN APP ────────────────────────────────────────────────────────────── */
+function App() {
+  const [screen, setScreen] = useState('connect'); // 'connect' | 'app'
+  const [activeTab, setActiveTab] = useState('overview');
+  const [dash, setDash] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [fetchLoading, setFetchLoading] = useState(false);
+  const [dashLoading, setDashLoading] = useState(false);
+  const [toast, setToast] = useState('');
+  const [syncTime, setSyncTime] = useState(null);
+
+  function showToast(msg) {
+    setToast(msg);
+    setTimeout(() => setToast(''), 4000);
+  }
+
+  async function loadDashboard() {
+    setDashLoading(true);
+    try {
+      const [dashData, histData] = await Promise.all([api.getDashboard(), api.getHistory(20)]);
+      setDash(dashData);
+      setHistory(histData);
+      setSyncTime(new Date());
+    } catch (e) {
+      showToast(`Backend error: ${e.message}. Is your server running on port 5001?`);
+    } finally {
+      setDashLoading(false);
+    }
+  }
+
+ async function fetchPulse() {
+    setFetchLoading(true);
+    try {
+      // 1. Call the API
+      const pulseData = await api.getPulse();
+      
+      // 2. SAFETY CHECK: Ensure pulseData exists before accessing ecoPulseScore
+      const score = pulseData?.ecoPulseScore || 0;
+      const merchant = pulseData?.merchant || "Unknown Merchant";
+
+      showToast(`✅ Pulse fetched! Score: ${score} — ${merchant}`);
+      
+      // 3. Refresh the dashboard
+      await loadDashboard(); 
+    } catch (e) {
+      // This catches the "pulse is undefined" error and shows it as a toast instead of crashing
+      console.error("Fetch error:", e);
+      showToast(`⚠ Pulse error: ${e.message}`);
+    } finally {
+      setFetchLoading(true); // Your original code had this as true; change to false to stop spinning
+      setFetchLoading(false); 
+    }
+  }
+
+  useEffect(() => {
+    if (screen === 'app') loadDashboard();
+  }, [screen]);
+
+  const tabs = [
+    { id: 'overview',  label: 'Overview',  icon: '◈' },
+    { id: 'history',   label: 'History',   icon: '◇' },
+    { id: 'insights',  label: 'Insights',  icon: '◉' },
+    { id: 'market',    label: 'Market',    icon: '⬡' },
+  ];
+
+  if (screen === 'connect') return <ConnectFlow onComplete={() => setScreen('app')} />;
+
+  function renderContent() {
+    if (dashLoading || !dash) return <SkeletonDash />;
+
+    const historyData = dash.history || [];
+    // Extract the trend data we set up in the server aggregation
+    const trendData = dash.weeklyTrend || [];
+
+    switch (activeTab) {
+      case 'overview': 
+        return (
+          <OverviewTab 
+            dash={dash} 
+            history={historyData} 
+            trendData={trendData} // Pass trend data here
+            onFetchPulse={fetchPulse} 
+            fetchLoading={fetchLoading} 
+          />
+        );
+      case 'history':  
+        return <HistoryTab history={historyData} onFetchPulse={fetchPulse} fetchLoading={fetchLoading} />;
+      case 'insights': 
+        return <InsightsTab history={historyData} />;
+      case 'market':   
+        return <MarketTab />;
+      default:         
+        return null;
+    }
+  }
+
+  return (
+    <div className="shell">
+      {/* TOAST */}
+      {toast && <div className="toast">{toast}</div>}
+
+      {/* SIDEBAR */}
+      <div className="sidebar">
+        <div className="sb-logo">
+          <div className="sb-logo-mark">EP</div>
+          <span className="sb-logo-text">EcoPulse</span>
+        </div>
+        {syncTime && (
+          <div className="sb-sync-status">
+            <div className="sb-sync-dot" />
+            <span>Synced {syncTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+          </div>
+        )}
+        <div className="sb-section">Main</div>
+        {tabs.map(t => (
+          <button key={t.id} className={`sb-item ${activeTab === t.id ? 'active' : ''}`} onClick={() => setActiveTab(t.id)}>
+            <span className="icon">{t.icon}</span>
+            <span>{t.label}</span>
+          </button>
+        ))}
+        <div className="sb-section">Actions</div>
+        <button className="sb-item" onClick={fetchPulse} disabled={fetchLoading}>
+          <span className="icon">{fetchLoading ? '⟳' : '⚡'}</span>
+          <span>{fetchLoading ? 'Fetching…' : 'Fetch Pulse'}</span>
+        </button>
+        <button className="sb-item" onClick={loadDashboard}>
+          <span className="icon">↻</span>
+          <span>Refresh</span>
+        </button>
+        <button className="sb-item" onClick={() => setScreen('connect')}>
+          <span className="icon">🔗</span>
+          <span>Reconnect</span>
+        </button>
+        <div className="sb-footer">
+          <div className="sb-account">
+            <div className="sb-avatar">EP</div>
+            <div>
+              <div className="sb-name">EcoPulse User</div>
+              <div className="sb-role">MongoDB · Nessie</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* MAIN */}
+      <div className="main">
+        <div className="topbar">
+          <div className="topbar-left">
+            <div className="topbar-title">
+              {activeTab === 'overview' ? 'Dashboard Overview' :
+               activeTab === 'history'  ? 'Pulse History' :
+               activeTab === 'insights' ? 'Spending Insights' : 'Market Quotes'}
+            </div>
+            <div className="topbar-sub">
+              {dash
+                ? `${dash.period?.month} ${dash.period?.year} · ${dash.summary.transactionCount} pulses · MongoDB Atlas`
+                : 'EcoPulse — Capital One Nessie + Alpha Vantage'}
+            </div>
+          </div>
+          <div className="topbar-right">
+            <span className="tag tag-lime">● Backend :5001</span>
+            <button className="btn btn-lime btn-sm" onClick={fetchPulse} disabled={fetchLoading}>
+              {fetchLoading ? '⟳ Fetching…' : '⚡ Fetch Pulse'}
+            </button>
+          </div>
+        </div>
+
+        <div className="nav-tabs">
+          {tabs.map(t => (
+            <button key={t.id} className={`nav-tab ${activeTab === t.id ? 'active' : ''}`} onClick={() => setActiveTab(t.id)}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="content">{renderContent()}</div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.render(<App />, document.getElementById('root'));
+</script>
+</body>
+</html>
